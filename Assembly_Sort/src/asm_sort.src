@@ -1,0 +1,40 @@
+	.GLB    _asm_sort
+	.SECTION P,CODE
+
+; This function sorts the elements of an array of N elements
+; R1 points to the start of the array
+; R2 has the number of elements
+_asm_sort:
+    .STACK  _asm_sort = 00000008h
+	PUSH.L R10			; save R10 on stack
+	PUSH.L R11			; save R11 on stack
+	; R3 has the sorting status (0=no element exchanged, 1=array element exchanged)
+	; R4 has the current element pointer (within the array)
+	; R5 has the next element pointer (within the array)
+	; R10 and R11 are temporary registers
+REPEAT:
+	MOV.L #0,R4			; set current element as zero
+	MOV.L #1,R5 		; next element starts as one
+	MOV.L #0,R3			; clear R3 (sorting is done)
+REPEAT2:
+	; start one sorting iteration
+	MOV.L [R4,R1],R10	; R10 has the current element
+	MOV.L [R5,R1],R11	; R11 has the next element
+	CMP	R11,R10			; compare current and next element
+	BLTU.B NEXT_ELEMENT	; branch to NEXT_ELEMENT if current element is lower than next element
+	; if R11 is lower than R10 (next element is lower than current element)
+	MOV.L R11,[R4,R1]	; move next element to current element
+	MOV.L R10,[R5,R1]	; move current element to next element
+	MOV.L #1,R3			; signal an exchange was done
+	; proceed to the next element
+NEXT_ELEMENT:
+	ADD #1,R4			; increment current element pointer
+	ADD #1,R5			; increment next element pointer
+	CMP R2,R5			; compare next element pointer to max elements
+	BLTU.B REPEAT2		; branch to REPEAT2 if R2<R5 (current iteration not completed)
+	CMP #0,R3			; check if we exchanged any array element on current iteration
+	BNE.B REPEAT		; branch to REPEAT if an exchange was done
+	POP R11				; restore R11 from stack
+	POP R10				; restore R10 from stack
+	RTS					; return if no exchange was done
+.END
